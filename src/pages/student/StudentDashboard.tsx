@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { StudentLayout } from '@/layouts/StudentLayout';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
@@ -6,30 +7,18 @@ import { AssignmentCard } from '@/components/cards/AssignmentCard';
 import { NotificationCard } from '@/components/cards/NotificationCard';
 import { AreaChart } from '@/components/charts/AreaChart';
 import { DonutChart } from '@/components/charts/DonutChart';
+import { Badge } from '@/components/common/Badge';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n/TranslationContext';
+import { studentAPI } from '@/services/api';
 import {
   BookOpen,
   Clock,
   TrendingUp,
   Calendar,
   CheckCircle,
+  Loader2
 } from 'lucide-react';
-
-const attendanceData = [
-  { name: 'Mon', value: 95 },
-  { name: 'Tue', value: 88 },
-  { name: 'Wed', value: 92 },
-  { name: 'Thu', value: 100 },
-  { name: 'Fri', value: 85 },
-  { name: 'Sat', value: 0 },
-];
-
-const gradeDistribution = [
-  { name: 'A Grade', value: 4 },
-  { name: 'B Grade', value: 2 },
-  { name: 'C Grade', value: 1 },
-];
 
 const enrolledSubjects = [
   { title: 'Mathematics', code: 'Grade 10', instructor: 'Dr. Smith', progress: 75, students: 45, schedule: 'Mon, Wed 10:00 AM' },
@@ -52,6 +41,39 @@ const notifications = [
 export function StudentDashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const dashboardData = await studentAPI.getDashboard();
+        setData(dashboardData);
+      } catch (error) {
+        console.error('Failed to fetch student dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <StudentLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </StudentLayout>
+    );
+  }
+
+  // Format attendance data for chart
+  const attendanceChartData = data?.attendanceHistory?.map((item: any) => ({
+    name: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
+    value: item.status === 'present' ? 100 : 0
+  })) || [];
 
   return (
     <StudentLayout>
@@ -64,48 +86,62 @@ export function StudentDashboard() {
       <div className="stats-grid mb-6 sm:mb-8">
         <StatCard
           title="Subjects"
-          value={3}
+          value={data?.activeCourses || 0}
           icon={BookOpen}
           iconColor="text-student"
           change="Academic Year 2025"
         />
         <StatCard
           title="Attendance Rate"
-          value="92%"
+          value={`${data?.totalAttendance || 0}%`}
           icon={CheckCircle}
           iconColor="text-success"
-          change="+3% this month"
+          change="Real-time tracking"
           changeType="positive"
         />
         <StatCard
-          title="Overall Percentage"
-          value="85%"
+          title="Upcoming Exams"
+          value={data?.examsCount || 0}
           icon={TrendingUp}
           iconColor="text-primary"
-          change="+2% from last term"
+          change="Next 30 days"
           changeType="positive"
         />
         <StatCard
           title="Pending Tasks"
-          value={4}
+          value={data?.pendingAssignments || 0}
           icon={Clock}
           iconColor="text-warning"
-          change="2 due this week"
+          change="Assignments due"
         />
       </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <div className="lg:col-span-2 dashboard-card p-4 sm:p-6">
-          <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Weekly Attendance</h3>
+          <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Recent Attendance</h3>
           <div className="chart-container-responsive">
-            <AreaChart data={attendanceData} color="hsl(var(--student))" height={220} />
+            <AreaChart data={attendanceChartData.length > 0 ? attendanceChartData : []} color="hsl(var(--student))" height={220} />
           </div>
         </div>
         <div className="dashboard-card p-4 sm:p-6">
-          <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Grade Distribution</h3>
-          <div className="chart-container-responsive">
-            <DonutChart data={gradeDistribution} height={220} />
+          <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Recent Grades</h3>
+          <div className="space-y-4">
+            {data?.recentGrades?.length > 0 ? (
+              data.recentGrades.map((grade: any, idx: number) => (
+                <div key={idx} className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-medium">{grade.subject}</p>
+                    <p className="text-xs text-muted-foreground">{grade.exam_type}</p>
+                  </div>
+                  <Badge variant={grade.marks_obtained / grade.total_marks >= 0.7 ? 'success' : 'warning'}>
+                    {grade.marks_obtained}/{grade.total_marks}
+                  </Badge>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">No recent grades</p>
+            )}
           </div>
         </div>
       </div>

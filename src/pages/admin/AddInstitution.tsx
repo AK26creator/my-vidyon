@@ -23,6 +23,7 @@ import {
     Plus,
     Trash2,
     X,
+    Loader2,
 } from 'lucide-react';
 
 interface Group {
@@ -255,10 +256,46 @@ export function AddInstitution() {
         }
     };
 
-    const handleSubmit = () => {
-        console.log('Submitting institution data...');
-        // Here you would submit all the data
-        navigate('/admin');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        setSubmitError(null);
+
+        try {
+            const { adminAPI } = await import('@/services/api');
+
+            // Format data for the backend Lambda
+            const submissionData = {
+                name: institutionName,
+                type: institutionType,
+                address: address,
+                city: city,
+                state: state,
+                contactEmail: contactEmail,
+                contactPhone: contactPhone,
+                academicYear: academicYear,
+                groups: groups.map(g => ({
+                    name: g.name,
+                    classes: g.classes.map(c => ({
+                        name: c.name,
+                        sections: c.sections
+                    }))
+                }))
+            };
+
+            await adminAPI.createInstitution(submissionData);
+
+            // In a real app, you might want to show a success toast here
+            // before navigating back
+            navigate('/admin/institutions');
+        } catch (error: any) {
+            console.error('Submission failed:', error);
+            setSubmitError(error.message || 'Failed to create institution. Please check your API configuration.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const downloadTemplate = (type: 'student' | 'staff') => {
@@ -1001,26 +1038,41 @@ export function AddInstitution() {
                 {renderStepContent()}
             </Card>
 
+            {submitError && (
+                <div className="mb-4 p-4 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
+                    {submitError}
+                </div>
+            )}
+
             {/* Navigation Buttons */}
             <div className="flex items-center justify-between">
                 <Button
                     onClick={handlePrevious}
                     variant="outline"
-                    disabled={currentStep === 1}
+                    disabled={currentStep === 1 || isSubmitting}
                 >
                     <ChevronLeft className="w-4 h-4 mr-2" />
                     Previous
                 </Button>
 
                 {currentStep < 6 ? (
-                    <Button onClick={handleNext}>
+                    <Button onClick={handleNext} disabled={isSubmitting}>
                         Next
                         <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
                 ) : (
-                    <Button onClick={handleSubmit} className="btn-primary">
-                        <Check className="w-4 h-4 mr-2" />
-                        Submit & Create Institution
+                    <Button onClick={handleSubmit} className="btn-primary" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Creating...
+                            </>
+                        ) : (
+                            <>
+                                <Check className="w-4 h-4 mr-2" />
+                                Submit & Create Institution
+                            </>
+                        )}
                     </Button>
                 )}
             </div>

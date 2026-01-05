@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { FacultyLayout } from '@/layouts/FacultyLayout';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
@@ -7,6 +8,7 @@ import { Badge } from '@/components/common/Badge';
 import { BarChart } from '@/components/charts/BarChart';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+import { facultyAPI } from '@/services/api';
 import {
   Users,
   BookOpen,
@@ -14,6 +16,8 @@ import {
   FileText,
   Plus,
   Calendar,
+  Loader2,
+  Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -47,9 +51,25 @@ const todaySchedule = [
 export function FacultyDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const dashboardData = await facultyAPI.getDashboard();
+        setData(dashboardData);
+      } catch (error) {
+        console.error('Failed to fetch faculty dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const handleCreateAssignment = () => {
-    toast.success('Assignment creation form opened');
     navigate('/faculty/assignments');
   };
 
@@ -74,6 +94,16 @@ export function FacultyDashboard() {
     },
   ];
 
+  if (loading) {
+    return (
+      <FacultyLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </FacultyLayout>
+    );
+  }
+
   return (
     <FacultyLayout>
       <PageHeader
@@ -94,29 +124,28 @@ export function FacultyDashboard() {
           value={125}
           icon={Users}
           iconColor="text-faculty"
-          change="Across 3 courses"
+          change={`Across ${data?.courses || 0} subjects`}
         />
         <StatCard
           title="Active Courses"
-          value={3}
+          value={data?.courses || 0}
           icon={BookOpen}
           iconColor="text-primary"
           change="Fall Semester 2025"
         />
         <StatCard
-          title="Pending Reviews"
-          value={12}
+          title="Active Assignments"
+          value={data?.activeAssignments || 0}
           icon={FileText}
           iconColor="text-warning"
-          change="4 due today"
+          change="Due soon"
         />
         <StatCard
-          title="Avg. Attendance"
-          value="87%"
-          icon={ClipboardCheck}
+          title="Pending Leaves"
+          value={data?.pendingLeaves || 0}
+          icon={Clock}
           iconColor="text-success"
-          change="+2% this week"
-          changeType="positive"
+          change="Awaiting approval"
         />
       </div>
 

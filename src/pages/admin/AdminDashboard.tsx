@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
@@ -5,6 +6,7 @@ import { DataTable } from '@/components/common/DataTable';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { adminAPI } from '@/services/api';
 import {
   Building2,
   Users,
@@ -13,7 +15,8 @@ import {
   Plus,
   ArrowRight,
   Shield,
-  BarChart3
+  BarChart3,
+  Loader2
 } from 'lucide-react';
 
 const recentActivities = [
@@ -26,6 +29,23 @@ const recentActivities = [
 
 export function AdminDashboard() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const dashboardData = await adminAPI.getDashboard();
+        setData(dashboardData);
+      } catch (error) {
+        console.error('Failed to fetch admin dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const activityColumns = [
     { key: 'action', header: 'Activity' },
@@ -47,6 +67,16 @@ export function AdminDashboard() {
     },
   ];
 
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <PageHeader
@@ -64,26 +94,26 @@ export function AdminDashboard() {
       <div className="stats-grid mb-6 sm:mb-8">
         <StatCard
           title="Total Institutions"
-          value="24"
+          value={data?.totalInstitutions || '0'}
           icon={Building2}
           iconColor="text-primary"
-          change="+2 this month"
+          change={`${data?.activeSubscriptions || 0} Active`}
           changeType="positive"
         />
         <StatCard
           title="Active Users"
-          value="15.2k"
+          value={data?.totalUsers?.toLocaleString() || '0'}
           icon={Users}
           iconColor="text-success"
-          change="+1.2k new users"
+          change={`${data?.totalStudents?.toLocaleString() || 0} Students`}
           changeType="positive"
         />
         <StatCard
           title="Platform Revenue"
-          value="₹45.2L"
+          value={`₹${(parseFloat(data?.totalRevenue || 0) / 100000).toFixed(1)}L`}
           icon={CreditCard}
           iconColor="text-warning"
-          change="+12% from last month"
+          change="Real-time collection"
           changeType="positive"
         />
         <StatCard

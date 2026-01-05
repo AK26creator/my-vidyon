@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { InstitutionLayout } from '@/layouts/InstitutionLayout';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
@@ -7,6 +8,7 @@ import { AreaChart } from '@/components/charts/AreaChart';
 import { DonutChart } from '@/components/charts/DonutChart';
 import { BarChart } from '@/components/charts/BarChart';
 import { useAuth } from '@/context/AuthContext';
+import { institutionAPI } from '@/services/api';
 import {
   GraduationCap,
   Users,
@@ -14,6 +16,7 @@ import {
   TrendingUp,
   IndianRupee,
   UserPlus,
+  Loader2
 } from 'lucide-react';
 
 const enrollmentTrend = [
@@ -57,6 +60,23 @@ const topPerformingDepts = [
 
 export function InstitutionDashboard() {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const dashboardData = await institutionAPI.getDashboard();
+        setData(dashboardData);
+      } catch (error) {
+        console.error('Failed to fetch institution dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const admissionColumns = [
     { key: 'name', header: 'Student Name' },
@@ -84,6 +104,16 @@ export function InstitutionDashboard() {
     { key: 'placement', header: 'Pass Rate' },
   ];
 
+  if (loading) {
+    return (
+      <InstitutionLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </InstitutionLayout>
+    );
+  }
+
   return (
     <InstitutionLayout>
       <PageHeader
@@ -95,32 +125,32 @@ export function InstitutionDashboard() {
       <div className="stats-grid mb-6 sm:mb-8">
         <StatCard
           title="Total Students"
-          value="2,450"
+          value={data?.totalStudents?.toLocaleString() || '0'}
           icon={GraduationCap}
           iconColor="text-institution"
-          change="+180 this semester"
+          change="Real-time count"
           changeType="positive"
         />
         <StatCard
           title="Total Teachers"
-          value={125}
+          value={data?.totalFaculty || '0'}
           icon={Users}
           iconColor="text-faculty"
-          change="+4 this month"
+          change={`${data?.totalDepartments || 0} Departments`}
         />
         <StatCard
           title="Total Classes"
-          value={45}
+          value="45"
           icon={Building}
           iconColor="text-institution"
           change="Across all grades"
         />
         <StatCard
           title="Revenue (YTD)"
-          value="₹12.5M"
+          value={`₹${(parseFloat(data?.totalRevenue || 0) / 1000000).toFixed(1)}M`}
           icon={IndianRupee}
           iconColor="text-success"
-          change="+15% vs last year"
+          change="Total collection"
           changeType="positive"
         />
       </div>

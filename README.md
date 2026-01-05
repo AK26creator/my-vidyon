@@ -1,73 +1,92 @@
-# Welcome to your Lovable project
+# MyVidyon ERP: The Complete AWS Handbook 🚀
 
-## Project info
+Welcome to the **MyVidyon ERP** core repository. This project is a modern, scalable Educational Resource Planning system built with React, Vite, and a serverless AWS backend.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## 🏗️ 1. Infrastructure Architecture
+This ERP runs on a "Full-Stack Serverless" architecture on AWS, ensuring high availability and low cost.
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```mermaid
+graph TD
+    User((User)) -->|Vite React| API[AWS API Gateway]
+    API -->|Auth Check| Cognito[AWS Cognito]
+    API -->|Route Request| Lambda[AWS Lambda]
+    Lambda -->|SQL| RDS[AWS RDS Postgres]
+    Lambda -->|Presigned URL| S3[AWS S3 Vault]
+    Lambda -->|Error Logs| CW[CloudWatch]
 ```
 
-**Edit a file directly in GitHub**
+- **React Frontend**: Modern UI with real-time dashboard tracking.
+- **API Gateway**: The "Front Door" that manages all secure endpoints.
+- **AWS Lambda**: 22+ microservices handling all business logic.
+- **RDS Postgres**: A modular relational database for academic and financial data.
+- **AWS Cognito**: Secure user identity, roles, and campus isolation.
+- **AWS S3**: Secure storage for student assignments and faculty materials.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 📂 2. Project Structure
+```text
+my-vidyon/
+├── database/                # Modular SQL Source of Truth
+│   └── modules/             # Schema split by domain (Institute, Staff, etc.)
+├── lambda-functions/        # All 22+ Backend Services
+│   ├── admin/               # Onboarding & Platform Stats
+│   ├── faculty/             # Attendance, Marks, Exams
+│   ├── institution/         # Campus Analytics & Users
+│   ├── parents/             # Child Tracking & Fees
+│   ├── students/            # Learning Management
+│   └── common/              # Shared DB & S3 logic
+├── src/                     # React / Vite Frontend
+│   ├── components/          # Reusable UI Blocks
+│   ├── pages/               # Functional Dashboards
+│   └── services/api.ts      # Frontend API Service Layer
+└── README.md                # This Guide
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+## 🐳 3. Database Setup (pgAdmin)
+We use a **Modular Schema** for better maintainability. To initialize your database, open pgAdmin and follow the module-based setup guide.
 
-This project is built with:
+👉 **[View pgAdmin Database Guide](file:///c:/Users/kamal/MY-VIDYON%20PROJECTS/my-vidyon-erp/my-vidyon/README.md#database-setup)**
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
+## 🌩️ 4. The Lambda Deployment Handbook
+For every backend function, we have provided an ultra-granular 7-step guide.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+👉 **[Detailed Lambda Deployment Handbook](file:///c:/Users/kamal/MY-VIDYON%20PROJECTS/my-vidyon-erp/my-vidyon/LAMBDA_DEPLOY_HANDBOOK.md)**
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## 🚪 5. API Gateway Setup Guide
+The "Front Door" allows your React app to communicate with Lambda. Follow our point-and-click guide.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+👉 **[Detailed API Gateway Setup Guide](file:///c:/Users/kamal/MY-VIDYON%20PROJECTS/my-vidyon-erp/my-vidyon/API_GATEWAY_HANDBOOK.md)**
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+## 🔐 6. Secondary Infrastructure (Cognito & S3)
+For setting up S3 storage and Cognito attributes, please refer to the infrastructure supplement.
+
+👉 **[AWS Infrastructure Supplement](file:///c:/Users/kamal/MY-VIDYON%20PROJECTS/my-vidyon-erp/my-vidyon/AWS_INFRA_SUPPLEMENT.md)**
+
+---
+
+## 📜 7. Complete API & Lambda Mapping
+*(Refer to the [Lambda Handbook](file:///c:/Users/kamal/MY-VIDYON%20PROJECTS/my-vidyon-erp/my-vidyon/LAMBDA_DEPLOY_HANDBOOK.md) for the full mapping list of all 22 endpoints).*
+
+---
+
+## 🛠️ 7. Local Development
+To run the project on your machine:
+
+```bash
+npm install        # Install Frontend Dependencies
+npm run dev        # Launch Vite Dev Server at localhost:5173
+```
+
+> [!IMPORTANT]
+> **Production Tip**: Always click **"Deploy API"** in the API Gateway console after making any changes, otherwise your React app will keep using the old versions! village
